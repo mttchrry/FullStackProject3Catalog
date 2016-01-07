@@ -16,6 +16,25 @@
 
 <body>  
 
+<!-- FACEBOOK initialization -->
+<script>
+  window.fbAsyncInit = function() {
+    FB.init({
+      appId      : '516361965208355',
+      xfbml      : true,
+      version    : 'v2.5'
+    });
+  };
+
+  (function(d, s, id){
+     var js, fjs = d.getElementsByTagName(s)[0];
+     if (d.getElementById(id)) {return;}
+     js = d.createElement(s); js.id = id;
+     js.src = "//connect.facebook.net/en_US/sdk.js";
+     fjs.parentNode.insertBefore(js, fjs);
+   }(document, 'script', 'facebook-jssdk'));
+</script>
+
 <!-- data-accesstype="offline" -->
 <!-- GOOGLE PLUS SIGN IN BUTTON-->
   <div id="signInButton">
@@ -28,6 +47,18 @@
       data-approvalprompt="force">
     </span>
   </div>
+
+  <fb:login-button scope="public_profile,email" onlogin="sendTokenToServer();">
+    <a href='javascript:sendToketToServer()'>Login With Facebook</a>
+  </fb:login-button>
+
+<!-- FACEBOOK TEST -->
+<div
+  class="fb-like"
+  data-share="true"
+  data-width="450"
+  data-show-faces="true">
+</div>
 
 <div id="result"></div>
 <script>

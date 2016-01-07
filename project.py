@@ -56,12 +56,11 @@ def gconnect():
         oauth_flow.redirect_uri = 'postmessage'
         credentials = oauth_flow.step2_exchange(code)
     except FlowExchangeError:
-        print 'got 2'
         response = make_response(
             json.dumps('Failed to upgrade the authorization code.'), 401)
         response.headers['Content-Type'] = 'application/json'
         return response
-    print 'got5'
+
     # Check that the access token is valid.
     access_token = credentials.access_token
     url = ('https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=%s'
@@ -72,11 +71,10 @@ def gconnect():
     if result.get('error') is not None:
         response = make_response(json.dumps(result.get('error')), 500)
         response.headers['Content-Type'] = 'application/json'
-    print 'got6'
+   
     # Verify that the access token is used for the intended user.
     gplus_id = credentials.id_token['sub']
     if result['user_id'] != gplus_id:
-        print 'got 3'
         response = make_response(
             json.dumps("Token's user ID doesn't match given user ID."), 401)
         response.headers['Content-Type'] = 'application/json'
@@ -84,14 +82,13 @@ def gconnect():
 
     # Verify that the access token is valid for this app.
     if result['issued_to'] != CLIENT_ID:
-        print 'got 4'
         response = make_response(
             json.dumps("Token's client ID does not match app's."), 401)
         print "Token's client ID does not match app's."
         response.headers['Content-Type'] = 'application/json'
         return response
 
-    print 'got7'
+   
     stored_credentials = login_session.get('credentials')
     stored_gplus_id = login_session.get('gplus_id')
     if stored_credentials is not None and gplus_id == stored_gplus_id:
@@ -100,7 +97,6 @@ def gconnect():
         response.headers['Content-Type'] = 'application/json'
         return response
 
-    print '808 and heartbreaks'
     # Store the access token in the session for later use.
     login_session['credentials'] = credentials.access_token
     login_session['gplus_id'] = gplus_id
@@ -192,8 +188,6 @@ def restaurantsJSON():
 @app.route('/restaurant/')
 def showRestaurants():
     restaurants = session.query(Restaurant).order_by(asc(Restaurant.name))
-    print login_session['email']
-    print getUserID(login_session['email'])
     if 'username' in login_session:
       return render_template('restaurants.html', restaurants=restaurants)
     return render_template('publicrestaurants.html', restaurants=restaurants)
@@ -220,6 +214,8 @@ def editRestaurant(restaurant_id):
         return redirect(url_for('showLogin'))
     editedRestaurant = session.query(
         Restaurant).filter_by(id=restaurant_id).one()
+    if editedRestaurant.user_id != login_session['user_id']:
+        return '<script>function myFunction() {alert("You are not authorized to edit this restaurant. Please create your own restaurant in order to Edit.");}</script><body onload="myFunction()"">'
     if request.method == 'POST':
         if request.form['name']:
             editedRestaurant.name = request.form['name']
@@ -281,7 +277,8 @@ def editMenuItem(restaurant_id, menu_id):
     if 'username' not in login_session: 
         return redirect(url_for('showLogin'))
     editedItem = session.query(MenuItem).filter_by(id=menu_id).one()
-    restaurant = session.query(Restaurant).filter_by(id=restaurant_id).one()
+    if editedItem.user_id != login_session['user_id']:
+        return '<script>function myFunction() {alert("You are not authorized to edit this item. Please create your own menu item in order to Edit.");}</script><body onload="myFunction()"">'
     if request.method == 'POST':
         if request.form['name']:
             editedItem.name = request.form['name']
@@ -304,8 +301,9 @@ def editMenuItem(restaurant_id, menu_id):
 def deleteMenuItem(restaurant_id, menu_id):
     if 'username' not in login_session: 
         return redirect(url_for('showLogin'))
-    restaurant = session.query(Restaurant).filter_by(id=restaurant_id).one()
     itemToDelete = session.query(MenuItem).filter_by(id=menu_id).one()
+    if itemToDelete.user_id != login_session['user_id']:
+        return '<script>function myFunction() {alert("You are not authorized to delete this item. Please create your own menu item in order to delete.");}</script><body onload="myFunction()"">'
     if request.method == 'POST':
         session.delete(itemToDelete)
         session.commit()
